@@ -36,13 +36,12 @@ export default function MindTree() {
   // Trees cache per theme — ref is always in sync for reliable reads
   const [treesCache, setTreesCache] = useState({});
   const treesCacheRef = useRef({});
-  const updateTreesCache = useCallback((updater) => {
-    updateTreesCache(prev => {
-      const next = typeof updater === "function" ? updater(prev) : updater;
-      treesCacheRef.current = next;
-      return next;
-    });
-  }, []);
+
+  const updateTreesCache = (updater) => {
+    const next = typeof updater === "function" ? updater(treesCacheRef.current) : updater;
+    treesCacheRef.current = next;
+    setTreesCache(next);
+  };
 
   // Pressure test
   const [pressureData, setPressureData] = useState(null);
