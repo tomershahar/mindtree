@@ -1,7 +1,22 @@
 import { base44 } from "@/api/base44Client";
 
+async function invokeLLM(params, retries = 3, delay = 2000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await invokeLLM(params);
+    } catch (err) {
+      const is429 = err?.response?.status === 429 || err?.message?.includes("429");
+      if (is429 && i < retries - 1) {
+        await new Promise(res => setTimeout(res, delay * (i + 1)));
+      } else {
+        throw err;
+      }
+    }
+  }
+}
+
 export async function generateThemes(topic, mode) {
-  const result = await base44.integrations.Core.InvokeLLM({
+  const result = await invokeLLM({
     prompt: `Topic: ${topic}
 Mode: ${mode}
 
@@ -34,7 +49,7 @@ Return a JSON array only, no commentary:
 }
 
 export async function generateRootAndBranches(topic, mode, themeTitle, themeDescription) {
-  const result = await base44.integrations.Core.InvokeLLM({
+  const result = await invokeLLM({
     prompt: `Topic: ${topic}
 Mode: ${mode}
 Theme: ${themeTitle} — ${themeDescription}
@@ -79,7 +94,7 @@ Return JSON only:
 export async function generateSubBranches(topic, mode, parentLabel, parentAssumption, depth) {
   if (depth >= 3) return [];
   
-  const result = await base44.integrations.Core.InvokeLLM({
+  const result = await invokeLLM({
     prompt: `Topic: ${topic}
 Mode: ${mode}
 Parent branch: ${parentLabel}
@@ -116,7 +131,7 @@ Return JSON only:
 }
 
 export async function pressureTestNode(topic, mode, nodeLabel, nodeAssumption) {
-  const result = await base44.integrations.Core.InvokeLLM({
+  const result = await invokeLLM({
     prompt: `Topic: ${topic}
 Mode: ${mode}
 Selected node: ${nodeLabel}
@@ -157,7 +172,7 @@ Return JSON only:
 }
 
 export async function suggestAlternative(topic, parentLabel, currentNodeLabel) {
-  const result = await base44.integrations.Core.InvokeLLM({
+  const result = await invokeLLM({
     prompt: `Topic: ${topic}
 Parent node: ${parentLabel}
 Current branch chosen: ${currentNodeLabel}
@@ -185,7 +200,7 @@ Return JSON only:
 }
 
 export async function generateReport(topic, mode, likedBranches) {
-  const result = await base44.integrations.Core.InvokeLLM({
+  const result = await invokeLLM({
     prompt: `Topic: ${topic}
 Mode: ${mode}
 Liked branches (JSON): ${JSON.stringify(likedBranches)}
