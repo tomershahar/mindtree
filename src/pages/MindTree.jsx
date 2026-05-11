@@ -280,13 +280,15 @@ export default function MindTree() {
 
   // Back to themes
   const handleBackToThemes = () => {
-    // Save current tree state to cache
     if (currentTheme) {
       setTreesCache(prev => ({ ...prev, [currentTheme.id]: { rootQuestion, branches } }));
     }
     setSelectedNode(null);
     setPressureData(null);
     setAlternative(null);
+    setExpandingNodeId(null);
+    setIsLoadingPressure(false);
+    setIsLoadingAlt(false);
     setAppState("themes");
     setShowReport(false);
   };
@@ -299,6 +301,9 @@ export default function MindTree() {
     setSelectedNode(null);
     setPressureData(null);
     setAlternative(null);
+    setExpandingNodeId(null);
+    setIsLoadingPressure(false);
+    setIsLoadingAlt(false);
     setAppState("themes");
     setShowReport(false);
   };
