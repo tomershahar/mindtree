@@ -1,8 +1,9 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Copy, Check, AlertTriangle, CheckCircle2, Search, ArrowRight, Code, FileText } from "lucide-react";
+import { Copy, Check, AlertTriangle, CheckCircle2, Search, ArrowRight, Code, FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import jsPDF from "jspdf";
 
 export default function RedTeamReport({ report, isLoading }) {
   const [copied, setCopied] = React.useState(false);
@@ -32,6 +33,69 @@ export default function RedTeamReport({ report, isLoading }) {
     return md;
   };
 
+  const handleExportPDF = () => {
+    if (!report) return;
+    const doc = new jsPDF();
+    const pageW = doc.internal.pageSize.getWidth();
+    const margin = 16;
+    const maxW = pageW - margin * 2;
+    let y = 20;
+
+    const addText = (text, opts = {}) => {
+      const { fontSize = 11, bold = false, color = [220, 220, 230], indent = 0 } = opts;
+      doc.setFontSize(fontSize);
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.setTextColor(...color);
+      const lines = doc.splitTextToSize(text, maxW - indent);
+      lines.forEach(line => {
+        if (y > 275) { doc.addPage(); y = 20; }
+        doc.text(line, margin + indent, y);
+        y += fontSize * 0.5;
+      });
+      y += 2;
+    };
+
+    const addSection = (title) => {
+      y += 4;
+      if (y > 270) { doc.addPage(); y = 20; }
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(130, 150, 255);
+      doc.text(title.toUpperCase(), margin, y);
+      y += 6;
+    };
+
+    addText("Red Team Report", { fontSize: 22, bold: true, color: [240, 240, 255] });
+    y += 4;
+
+    addSection("⚠  Weak Assumptions");
+    report.weakAssumptions?.forEach(a => {
+      addText(a.name, { bold: true, color: [255, 210, 100] });
+      addText(a.why, { color: [180, 180, 200], indent: 4 });
+      y += 2;
+    });
+
+    addSection("✓  Strong Branches");
+    report.strongBranches?.forEach(b => {
+      addText(b.name, { bold: true, color: [100, 220, 150] });
+      addText(b.why, { color: [180, 180, 200], indent: 4 });
+      y += 2;
+    });
+
+    addSection("🔍  Synthesis");
+    report.synthesis?.forEach((s, i) => {
+      addText(`${i + 1}. ${s}`, { color: [200, 210, 240], indent: 4 });
+    });
+
+    addSection("→  Recommended Next Step");
+    addText(report.nextStep, { color: [220, 200, 255], indent: 4 });
+
+    addSection(report.outputFormat === "prompt" ? "💻  Cursor/Lovable Prompt" : "📋  Argument Summary");
+    addText(report.outputContent, { color: [200, 210, 230], indent: 4 });
+
+    doc.save("red-team-report.pdf");
+  };
+
   const handleCopy = async () => {
     await navigator.clipboard.writeText(formatReportAsMarkdown());
     setCopied(true);
@@ -55,10 +119,16 @@ export default function RedTeamReport({ report, isLoading }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl font-bold text-foreground">Red Team Report</h2>
-        <Button onClick={handleCopy} variant="outline" size="sm" className="rounded-lg">
-          {copied ? <Check className="w-4 h-4 mr-1.5" /> : <Copy className="w-4 h-4 mr-1.5" />}
-          {copied ? "Copied!" : "Copy Report"}
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleExportPDF} variant="outline" size="sm" className="rounded-lg">
+            <Download className="w-4 h-4 mr-1.5" />
+            Export PDF
+          </Button>
+          <Button onClick={handleCopy} variant="outline" size="sm" className="rounded-lg">
+            {copied ? <Check className="w-4 h-4 mr-1.5" /> : <Copy className="w-4 h-4 mr-1.5" />}
+            {copied ? "Copied!" : "Copy Report"}
+          </Button>
+        </div>
       </div>
 
       <motion.div
