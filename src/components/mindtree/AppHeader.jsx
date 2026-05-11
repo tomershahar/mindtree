@@ -44,7 +44,7 @@ export default function AppHeader({
       {/* Generate Report */}
       <Button
         onClick={onGenerateReport}
-        disabled={likedCount < 3 || isGeneratingReport || showReport}
+        disabled={likedCount < 3 || isGeneratingReport}
         size="sm"
         className="rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-30 text-xs font-semibold"
       >

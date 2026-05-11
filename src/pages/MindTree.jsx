@@ -71,29 +71,39 @@ export default function MindTree() {
   }, []);
 
   const getAllLiked = useCallback(() => {
-    let all = collectLiked(branches);
+    let all = [];
+    // Pull from cache (always in sync with live branches)
     Object.values(treesCache).forEach(cached => {
       if (cached.branches) {
         all = all.concat(collectLiked(cached.branches));
       }
     });
-    // Deduplicate
+    // Also include live branches if current theme not in cache yet
+    if (currentTheme && !treesCache[currentTheme.id]) {
+      all = all.concat(collectLiked(branches));
+    }
+    // Deduplicate by label
     const seen = new Set();
     return all.filter(item => {
-      const key = item.label;
-      if (seen.has(key)) return false;
-      seen.add(key);
+      if (seen.has(item.label)) return false;
+      seen.add(item.label);
       return true;
     });
-  }, [branches, treesCache, collectLiked]);
+  }, [branches, treesCache, collectLiked, currentTheme]);
 
+  // Always count from cache (which is kept in sync), plus current branches if not in cache
   const totalLikedCount = (() => {
-    let total = likedCount;
+    let total = 0;
+    // Count from all cached trees (they are kept in sync)
     Object.values(treesCache).forEach(cached => {
       if (cached.branches) {
         total += countLiked(cached.branches);
       }
     });
+    // If current theme not yet saved to cache, count live branches too
+    if (currentTheme && !treesCache[currentTheme.id]) {
+      total += likedCount;
+    }
     return total;
   })();
 
@@ -174,7 +184,17 @@ export default function MindTree() {
         liked: n.id === nodeId ? !n.liked : n.liked,
         children: n.children ? toggle(n.children) : n.children
       }));
-    setBranches(prev => toggle(prev));
+    setBranches(prev => {
+      const updated = toggle(prev);
+      // Keep cache in sync
+      if (currentTheme) {
+        setTreesCache(cache => ({
+          ...cache,
+          [currentTheme.id]: { ...cache[currentTheme.id], branches: updated }
+        }));
+      }
+      return updated;
+    });
   };
 
   // Expand node (generate sub-branches)

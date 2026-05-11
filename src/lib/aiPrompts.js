@@ -199,20 +199,16 @@ Rules:
 - Synthesis: identify patterns in what the user kept choosing and what that reveals about their thinking
 - Next step: one concrete action, not "do more research"
 
-Also decide: is this topic best served by (a) a Cursor/Lovable coding prompt, or (b) an argument/strategy summary? Output whichever fits.
+Also decide: is this topic best served by (a) a Cursor/Lovable coding prompt (outputFormat = "prompt"), or (b) an argument/strategy summary (outputFormat = "summary")? Output whichever fits.
 
-Return JSON only:
+Return JSON only with these exact fields:
 {
-  "weakAssumptions": [
-    { "name": "...", "why": "..." }
-  ],
-  "strongBranches": [
-    { "name": "...", "why": "..." }
-  ],
+  "weakAssumptions": [{ "name": "assumption name", "why": "why it is weak" }],
+  "strongBranches": [{ "name": "branch name", "why": "why it is strong" }],
   "synthesis": ["observation 1", "observation 2", "observation 3"],
-  "nextStep": "...",
-  "outputFormat": "prompt" or "summary",
-  "outputContent": "The Cursor/Lovable prompt or argument summary text"
+  "nextStep": "one concrete next action",
+  "outputFormat": "prompt",
+  "outputContent": "the content text"
 }`,
     response_json_schema: {
       type: "object",
@@ -233,11 +229,11 @@ Return JSON only:
         },
         synthesis: { type: "array", items: { type: "string" } },
         nextStep: { type: "string" },
-        outputFormat: { type: "string" },
+        outputFormat: { type: "string", enum: ["prompt", "summary"] },
         outputContent: { type: "string" }
-      }
-    },
-    model: "claude_sonnet_4_6"
+      },
+      required: ["weakAssumptions", "strongBranches", "synthesis", "nextStep", "outputFormat", "outputContent"]
+    }
   });
   return result;
 }
