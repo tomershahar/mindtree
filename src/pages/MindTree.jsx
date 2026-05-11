@@ -376,6 +376,12 @@ export default function MindTree() {
           <div className="text-center">
             <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin mb-4 mx-auto" />
             <p className="text-muted-foreground animate-pulse-glow">Building decision tree...</p>
+            <button
+              onClick={() => setAppState("themes")}
+              className="mt-6 text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors underline underline-offset-2"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       </div>
