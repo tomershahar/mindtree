@@ -56,10 +56,12 @@ export default function TreeNode({
               e.stopPropagation();
               if (depth < 3) onExpand(node);
             }}
-            className={`mt-0.5 shrink-0 w-6 h-6 rounded-md flex items-center justify-center transition-colors ${
+            className={`mt-0.5 shrink-0 w-6 h-6 rounded-md flex items-center justify-center transition-all duration-200 ${
               depth >= 3
                 ? "opacity-0 cursor-default"
-                : "hover:bg-primary/20 text-muted-foreground hover:text-primary"
+                : hasChildren
+                ? "bg-primary/20 text-primary hover:bg-primary/30"
+                : "bg-primary/10 border border-primary/40 text-primary hover:bg-primary/25 hover:border-primary/70"
             }`}
           >
             {isExpanding ? (
