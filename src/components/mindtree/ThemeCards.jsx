@@ -21,7 +21,11 @@ export default function ThemeCards({ themes, completedThemes, onSelectTheme }) {
               transition={{ delay: i * 0.08, duration: 0.3 }}
               whileHover={{ x: 4 }}
               onClick={() => onSelectTheme(theme)}
-              className="w-full text-left p-5 rounded-xl border border-border bg-secondary/30 hover:bg-secondary/60 hover:border-muted-foreground/30 transition-all duration-200 group"
+              className={`w-full text-left p-5 rounded-xl border transition-all duration-200 group ${
+                isComplete
+                  ? "border-green-500 bg-green-500/10 hover:bg-green-500/15 shadow-[0_0_0_1px_rgba(34,197,94,0.4)]"
+                  : "border-border bg-secondary/30 hover:bg-secondary/60 hover:border-muted-foreground/30"
+              }`}
             >
               <div className="flex items-start gap-4">
                 <span className="text-xl mt-0.5">{themeIcons[i % themeIcons.length]}</span>
