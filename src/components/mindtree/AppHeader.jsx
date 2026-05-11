@@ -1,5 +1,5 @@
 import React from "react";
-import { Sparkles, Star, FileText } from "lucide-react";
+import { Sparkles, Star, FileText, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -9,7 +9,8 @@ export default function AppHeader({
   likedCount,
   onGenerateReport,
   isGeneratingReport,
-  showReport
+  showReport,
+  onNewSession
 }) {
   return (
     <header className="h-14 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-6 gap-4 shrink-0 z-50">
@@ -40,6 +41,17 @@ export default function AppHeader({
         <Star className={`w-3.5 h-3.5 ${likedCount > 0 ? "text-yellow-400 fill-yellow-400" : ""}`} />
         <span>{likedCount} starred</span>
       </div>
+
+      {/* New Session */}
+      <Button
+        onClick={onNewSession}
+        size="sm"
+        variant="ghost"
+        className="rounded-lg text-xs text-muted-foreground hover:text-foreground"
+      >
+        <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+        New Session
+      </Button>
 
       {/* Generate Report */}
       <Button

@@ -303,6 +303,28 @@ export default function MindTree() {
     setShowReport(false);
   };
 
+  // New session - reset all state
+  const handleNewSession = () => {
+    setAppState("input");
+    setTopic("");
+    setMode("");
+    setThemes([]);
+    setCompletedThemes([]);
+    setCurrentTheme(null);
+    setRootQuestion("");
+    setBranches([]);
+    setSelectedNode(null);
+    setExpandingNodeId(null);
+    setTreesCache({});
+    setPressureData(null);
+    setAlternative(null);
+    setIsLoadingPressure(false);
+    setIsLoadingAlt(false);
+    setReport(null);
+    setIsGeneratingReport(false);
+    setShowReport(false);
+  };
+
   // Generate report
   const handleGenerateReport = async () => {
     // If report already exists, just show it
@@ -348,6 +370,7 @@ export default function MindTree() {
           onGenerateReport={handleGenerateReport}
           isGeneratingReport={isGeneratingReport}
           showReport={showReport}
+          onNewSession={handleNewSession}
         />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -369,6 +392,7 @@ export default function MindTree() {
         onGenerateReport={handleGenerateReport}
         isGeneratingReport={isGeneratingReport}
         showReport={showReport}
+        onNewSession={handleNewSession}
       />
 
       <div className="flex-1 flex overflow-hidden">
