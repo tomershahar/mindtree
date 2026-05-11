@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 async function invokeLLM(params, retries = 3, delay = 2000) {
   for (let i = 0; i < retries; i++) {
     try {
-      return await invokeLLM(params);
+      return await base44.integrations.Core.InvokeLLM(params);
     } catch (err) {
       const is429 = err?.response?.status === 429 || err?.message?.includes("429");
       if (is429 && i < retries - 1) {
