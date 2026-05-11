@@ -305,6 +305,11 @@ export default function MindTree() {
 
   // Generate report
   const handleGenerateReport = async () => {
+    // If report already exists, just show it
+    if (report) {
+      setShowReport(true);
+      return;
+    }
     const liked = getAllLiked();
     if (liked.length < 3) return;
     setIsGeneratingReport(true);
