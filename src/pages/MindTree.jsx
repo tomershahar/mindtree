@@ -215,7 +215,7 @@ export default function MindTree() {
 
     setExpandingNodeId(node.id);
     const subs = await generateSubBranches(topic, mode, node.label, node.assumption, depth);
-    const newChildren = subs.map(s => ({ ...s, liked: false, children: null, depth: depth + 1 }));
+    const newChildren = subs.map(s => ({ ...s, id: `${node.id}-child-${s.id}-${Date.now()}`, liked: false, children: null, depth: depth + 1 }));
 
     const attach = (nodes) =>
       nodes.map(n => ({
