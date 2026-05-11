@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import TopicInput from "../components/mindtree/TopicInput";
 import ThemeCards from "../components/mindtree/ThemeCards";
 import TreePanel from "../components/mindtree/TreePanel";
@@ -33,8 +33,16 @@ export default function MindTree() {
   const [selectedNode, setSelectedNode] = useState(null);
   const [expandingNodeId, setExpandingNodeId] = useState(null);
 
-  // Trees cache per theme
+  // Trees cache per theme — ref is always in sync for reliable reads
   const [treesCache, setTreesCache] = useState({});
+  const treesCacheRef = useRef({});
+  const updateTreesCache = useCallback((updater) => {
+    updateTreesCache(prev => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      treesCacheRef.current = next;
+      return next;
+    });
+  }, []);
 
   // Pressure test
   const [pressureData, setPressureData] = useState(null);
@@ -126,10 +134,11 @@ export default function MindTree() {
     setAlternative(null);
     setShowReport(false);
 
-    // Check cache
-    if (treesCache[theme.id]) {
-      setRootQuestion(treesCache[theme.id].rootQuestion);
-      setBranches(treesCache[theme.id].branches);
+    // Use ref for a reliable synchronous cache check
+    const cached = treesCacheRef.current[theme.id];
+    if (cached) {
+      setRootQuestion(cached.rootQuestion);
+      setBranches(cached.branches);
       setAppState("tree");
       return;
     }
@@ -139,7 +148,7 @@ export default function MindTree() {
     const newBranches = result.branches.map(b => ({ ...b, liked: false, children: null, depth: 0 }));
     setRootQuestion(result.rootQuestion);
     setBranches(newBranches);
-    setTreesCache(prev => ({ ...prev, [theme.id]: { rootQuestion: result.rootQuestion, branches: newBranches } }));
+    updateTreesCache(prev => ({ ...prev, [theme.id]: { rootQuestion: result.rootQuestion, branches: newBranches } }));
     setAppState("tree");
   };
 
@@ -186,16 +195,20 @@ export default function MindTree() {
       }));
     setBranches(prev => {
       const updated = toggle(prev);
-      // Keep cache in sync
-      if (currentTheme) {
-        setTreesCache(cache => ({
-          ...cache,
-          [currentTheme.id]: { ...cache[currentTheme.id], branches: updated }
-        }));
-      }
       return updated;
     });
   };
+
+  // Keep cache in sync whenever branches change
+  useEffect(() => {
+    if (currentTheme && branches.length > 0 && appState === "tree") {
+      treesCacheRef.current = {
+        ...treesCacheRef.current,
+        [currentTheme.id]: { rootQuestion, branches }
+      };
+      setTreesCache(treesCacheRef.current);
+    }
+  }, [branches, currentTheme, rootQuestion, appState]);
 
   // Expand node (generate sub-branches)
   const handleExpand = async (node) => {
@@ -281,7 +294,7 @@ export default function MindTree() {
   // Back to themes
   const handleBackToThemes = () => {
     if (currentTheme) {
-      setTreesCache(prev => ({ ...prev, [currentTheme.id]: { rootQuestion, branches } }));
+      updateTreesCache(prev => ({ ...prev, [currentTheme.id]: { rootQuestion, branches } }));
     }
     setSelectedNode(null);
     setPressureData(null);
@@ -295,7 +308,7 @@ export default function MindTree() {
 
   const handleDoneWithTheme = () => {
     if (currentTheme) {
-      setTreesCache(prev => ({ ...prev, [currentTheme.id]: { rootQuestion, branches } }));
+      updateTreesCache(prev => ({ ...prev, [currentTheme.id]: { rootQuestion, branches } }));
       setCompletedThemes(prev => prev.includes(currentTheme.id) ? prev : [...prev, currentTheme.id]);
     }
     setSelectedNode(null);
@@ -320,7 +333,7 @@ export default function MindTree() {
     setBranches([]);
     setSelectedNode(null);
     setExpandingNodeId(null);
-    setTreesCache({});
+    updateTreesCache({});
     setPressureData(null);
     setAlternative(null);
     setIsLoadingPressure(false);
