@@ -54,15 +54,22 @@ export default function AppHeader({
       </Button>
 
       {/* Generate Report */}
-      <Button
-        onClick={onGenerateReport}
-        disabled={likedCount < 3 || isGeneratingReport}
-        size="sm"
-        className="rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-30 text-xs font-semibold"
-      >
-        <FileText className="w-3.5 h-3.5 mr-1.5" />
-        {isGeneratingReport ? "Generating..." : showReport ? "Report Ready" : "Generate Report"}
-      </Button>
+      <div className="flex flex-col items-end gap-0.5">
+        <Button
+          onClick={onGenerateReport}
+          disabled={likedCount < 3 || isGeneratingReport}
+          size="sm"
+          className="rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-40 text-xs font-semibold"
+        >
+          <FileText className="w-3.5 h-3.5 mr-1.5" />
+          {isGeneratingReport ? "Generating..." : showReport ? "Report Ready" : "Generate Report"}
+        </Button>
+        {likedCount < 3 && (
+          <span className="text-[10px] text-muted-foreground/60">
+            Star {3 - likedCount} more to unlock
+          </span>
+        )}
+      </div>
     </header>
   );
 }

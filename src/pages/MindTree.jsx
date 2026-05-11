@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import TopicInput from "../components/mindtree/TopicInput";
 import ThemeCards from "../components/mindtree/ThemeCards";
 import TreePanel from "../components/mindtree/TreePanel";
@@ -36,6 +36,10 @@ export default function MindTree() {
   // Trees cache per theme — ref is always in sync for reliable reads
   const [treesCache, setTreesCache] = useState({});
   const treesCacheRef = useRef({});
+
+  // Race condition guards
+  const activeThemeIdRef = useRef(null);
+  const selectedNodeIdRef = useRef(null);
 
   const updateTreesCache = (updater) => {
     const next = typeof updater === "function" ? updater(treesCacheRef.current) : updater;
@@ -98,21 +102,15 @@ export default function MindTree() {
     });
   }, [branches, treesCache, collectLiked, currentTheme]);
 
-  // Always count from cache (which is kept in sync), plus current branches if not in cache
-  const totalLikedCount = (() => {
+  // Fix #4: memoize totalLikedCount so it doesn't recalculate on every render
+  const totalLikedCount = useMemo(() => {
     let total = 0;
-    // Count from all cached trees (they are kept in sync)
     Object.values(treesCache).forEach(cached => {
-      if (cached.branches) {
-        total += countLiked(cached.branches);
-      }
+      if (cached.branches) total += countLiked(cached.branches);
     });
-    // If current theme not yet saved to cache, count live branches too
-    if (currentTheme && !treesCache[currentTheme.id]) {
-      total += likedCount;
-    }
+    if (currentTheme && !treesCache[currentTheme.id]) total += likedCount;
     return total;
-  })();
+  }, [treesCache, currentTheme, likedCount, countLiked]);
 
   // --- HANDLERS ---
 
@@ -127,13 +125,14 @@ export default function MindTree() {
   };
 
   const handleSelectTheme = async (theme) => {
+    // Fix #1: track which theme is active to discard stale async results
+    activeThemeIdRef.current = theme.id;
     setCurrentTheme(theme);
     setSelectedNode(null);
     setPressureData(null);
     setAlternative(null);
     setShowReport(false);
 
-    // Use ref for a reliable synchronous cache check
     const cached = treesCacheRef.current[theme.id];
     if (cached) {
       setRootQuestion(cached.rootQuestion);
@@ -144,6 +143,10 @@ export default function MindTree() {
 
     setAppState("loading_tree");
     const result = await generateRootAndBranches(topic, mode, theme.title, theme.description);
+
+    // Discard if user switched to a different theme while loading
+    if (activeThemeIdRef.current !== theme.id) return;
+
     const newBranches = result.branches.map(b => ({ ...b, liked: false, children: null, depth: 0 }));
     setRootQuestion(result.rootQuestion);
     setBranches(newBranches);
@@ -152,12 +155,13 @@ export default function MindTree() {
   };
 
   const handleSelectNode = async (node) => {
+    // Fix #3: track selected node id to discard stale async results
+    selectedNodeIdRef.current = node.id;
     setSelectedNode(node);
     setPressureData(null);
     setAlternative(null);
     setShowReport(false);
 
-    // Load pressure test
     setIsLoadingPressure(true);
     setIsLoadingAlt(true);
 
@@ -165,6 +169,9 @@ export default function MindTree() {
       pressureTestNode(topic, mode, node.label, node.assumption),
       suggestAlternative(topic, findParentLabel(node.id, branches) || topic, node.label)
     ]);
+
+    // Discard if user clicked a different node while loading
+    if (selectedNodeIdRef.current !== node.id) return;
 
     setPressureData(pressure);
     setIsLoadingPressure(false);
@@ -223,7 +230,8 @@ export default function MindTree() {
     }
 
     const depth = getNodeDepth(node.id, branches);
-    if (depth >= 3) return;
+    // Fix #2: -1 means node not found; treat as max depth to prevent infinite expand
+    if (depth === -1 || depth >= 3) return;
 
     setExpandingNodeId(node.id);
     const subs = await generateSubBranches(topic, mode, node.label, node.assumption, depth);
